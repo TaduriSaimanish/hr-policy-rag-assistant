@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+venv/
+.env
+uploaded_docs/
+faiss_index/
+ragas_eval_logs.jsonl
+.DS_Store

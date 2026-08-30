@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Policy RAG Assistant</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 24px; }
+        .container { max-width: 800px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        h1 { color: #1e293b; margin-top: 0; }
+        .card { background: #f1f5f9; padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #cbd5e1; }
+        input[type="file"], input[type="text"] { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 16px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        button { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button:hover { background: #1d4ed8; }
+        .answer-box { background: #eff6ff; border-left: 4px solid #2563eb; padding: 16px; margin-top: 16px; border-radius: 4px; }
+        .source-tag { background: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-right: 6px; font-weight: bold; display: inline-block; margin-bottom: 4px; }
+        .source-card { background: #ffffff; border: 1px solid #e2e8f0; padding: 12px; margin-top: 8px; border-radius: 6px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HR Policy RAG Assistant</h1>
+        <p>Single-source RAG architecture with FAISS, Cross-Encoder Re-Ranking & RAGAS Evaluation.</p>
+
+        <div class="card">
+            <h3>1. Upload HR Handbook PDF</h3>
+            <input type="file" id="pdfFile" accept="application/pdf">
+            <button onclick="uploadPDF()">Upload & Index</button>
+            <div id="uploadStatus" style="margin-top: 10px; font-size: 14px; font-weight: 600;"></div>
+        </div>
+
+        <div class="card">
+            <h3>2. Query Policy Document</h3>
+            <input type="text" id="userQuery" placeholder="e.g. What is the probation period notice requirement and remote work policy?">
+            <button onclick="sendQuery()">Ask Assistant</button>
+        </div>
+
+        <div id="results" style="display: none;">
+            <h3>Response & Source Attribution</h3>
+            <div id="answerText" class="answer-box"></div>
+            
+            <h4 style="margin-top: 24px;">Retrieved Source Chunks & Citations</h4>
+            <div id="sourcesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8000";
+
+        async function uploadPDF() {
+            const fileInput = document.getElementById('pdfFile');
+            const status = document.getElementById('uploadStatus');
+            if (!fileInput.files[0]) { alert('Please select a PDF file first.'); return; }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            status.innerText = "Indexing PDF chunks into FAISS vector store...";
+
+            try {
+                const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    status.style.color = 'green';
+                    status.innerText = `Success: ${data.message} (${data.total_chunks} chunks indexed)`;
+                } else {
+                    status.style.color = 'red';
+                    status.innerText = `Error: ${data.detail}`;
+                }
+            } catch (err) {
+                status.style.color = 'red';
+                status.innerText = `Error: ${err.message}`;
+            }
+        }
+
+        async function sendQuery() {
+            const query = document.getElementById('userQuery').value;
+            const resultsDiv = document.getElementById('results');
+            const answerText = document.getElementById('answerText');
+            const sourcesList = document.getElementById('sourcesList');
+
+            if (!query) return;
+            answerText.innerText = "Analyzing query, executing decomposition, re-ranking & generating response...";
+            resultsDiv.style.display = 'block';
+            sourcesList.innerHTML = '';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: query })
+                });
+                const data = await res.json();
+
+                answerText.innerText = data.answer;
+                
+                data.sources.forEach(src => {
+                    const card = document.createElement('div');
+                    card.className = 'source-card';
+                    card.innerHTML = `<span class="source-tag">Page ${src.page_label}</span> <span class="source-tag">${src.chunk_id}</span><p style="margin: 6px 0 0 0; color: #475569;">${src.snippet}</p>`;
+                    sourcesList.appendChild(card);
+                });
+            } catch (err) {
+                answerText.innerText = `Error processing query: ${err.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
