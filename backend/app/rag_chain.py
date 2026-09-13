@@ -18,6 +18,30 @@ Context:
 Question: {question}
 Answer:"""
 
+
+rag_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            (
+                "You are a helpful and knowledgeable AI learning assistant. "
+                "Answer the user's question using ONLY the provided context. "
+                "If the context does not contain enough information, say so honestly. "
+                "Cite relevant page numbers when possible. "
+                "Be thorough, structured, and educational in your response."
+            ),
+        ),
+        (
+            "human",
+            (
+                "Context:\n{context}\n\n"
+                "Question: {question}\n\n"
+                "Answer:"
+            ),
+        ),
+    ]
+)
+
 prompt = ChatPromptTemplate.from_template(SYSTEM_PROMPT)
 
 def format_docs(docs: List[Document]) -> str:
@@ -32,7 +56,7 @@ def build_lcel_chain():
 
     chain = (
         {"context": lambda x: format_docs(x["documents"]), "question": lambda x: x["question"]}
-        | prompt
+        | rag_prompt
         | llm
         | StrOutputParser()
     )

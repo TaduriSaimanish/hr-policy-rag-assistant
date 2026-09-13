@@ -3,7 +3,7 @@ from langchain_openai import ChatOpenAI
 from app.config import get_settings
 
 
-def get_llm(temperature: float = 0, max_tokens: int = 2048) -> ChatOpenAI:
+def get_llm(temperature: float = 0.2, max_tokens: int = 2048) -> ChatOpenAI:
     """
     Gemini 2.5 Flash routed through OpenRouter.
     OpenRouter exposes an OpenAI-compatible endpoint, so we use ChatOpenAI

@@ -41,5 +41,6 @@ def rerank_documents(
             "rerank_score": round(item["score"], 4),
             "snippet": doc.page_content[:120] + "..."
         })
+     
         
     return reranked_docs, comparison_log
