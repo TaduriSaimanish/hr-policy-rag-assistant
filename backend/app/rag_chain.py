@@ -1,8 +1,9 @@
 from typing import List, Dict, Any
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_openai import ChatOpenAI
 from langchain_core.documents import Document
+
+from app.llm import get_llm
 
 SYSTEM_PROMPT = """You are an authoritative HR Policy Assistant. Answer the user's question using ONLY the provided context chunks.
 If the requested information is not explicitly stated in the context, respond: "Information not found in the uploaded document."
@@ -26,9 +27,9 @@ def format_docs(docs: List[Document]) -> str:
         formatted.append(f"{source_info}\n{doc.page_content}")
     return "\n\n---\n\n".join(formatted)
 
-def build_lcel_chain(llm_model: str = "gpt-4o-mini"):
-    llm = ChatOpenAI(model=llm_model, temperature=0)
-    
+def build_lcel_chain():
+    llm = get_llm()
+
     chain = (
         {"context": lambda x: format_docs(x["documents"]), "question": lambda x: x["question"]}
         | prompt

@@ -1,6 +1,10 @@
 import os
 import shutil
 from typing import Optional
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -34,7 +38,7 @@ def health_check():
     return {"status": "healthy", "service": "HR Policy RAG Assistant"}
 
 @app.post("/api/upload")
-async def upload_pdf(file: UploadFile = File(...)):
+def upload_pdf(file: UploadFile = File(...)):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
         
@@ -52,7 +56,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     }
 
 @app.post("/api/query")
-async def process_user_query(request: QueryRequest):
+def process_user_query(request: QueryRequest):
     query = request.question
     
     # Step 1: Query Decomposition & Routing
@@ -75,20 +79,20 @@ async def process_user_query(request: QueryRequest):
     # Step 4: LCEL Chain Answer Generation
     rag_response = execute_rag(query, reranked_docs)
     
-    # Step 5: RAGAS Evaluation Logging
-    contexts = [doc.page_content for doc in reranked_docs]
-    ragas_scores = run_ragas_evaluation(
-        question=query,
-        answer=rag_response["answer"],
-        contexts=contexts,
-        ground_truth=request.ground_truth
-    )
+    # # Step 5: RAGAS Evaluation Logging
+    # contexts = [doc.page_content for doc in reranked_docs]
+    # ragas_scores = run_ragas_evaluation(
+    #     question=query,
+    #     answer=rag_response["answer"],
+    #     contexts=contexts,
+    #     ground_truth=request.ground_truth
+    # )
     
     return {
         "question": query,
         "decomposed_queries": sub_queries,
         "answer": rag_response["answer"],
         "sources": rag_response["sources"],
-        "rerank_comparison": rank_comparison,
-        "ragas_scores": ragas_scores
+        "rerank_comparison": rank_comparison
+        # "ragas_scores": ragas_scores
     }

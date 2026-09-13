@@ -3,8 +3,10 @@ from datetime import datetime
 from typing import List, Dict
 from datasets import Dataset
 from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevance, context_precision
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from ragas.metrics import faithfulness, answer_relevancy, context_precision
+
+from app.llm import get_llm
+from app.vectorstore import embeddings
 
 LOG_FILE = "ragas_eval_logs.jsonl"
 
@@ -20,13 +22,12 @@ def run_ragas_evaluation(question: str, answer: str, contexts: List[str], ground
         
     dataset = Dataset.from_dict(data)
     
-    metrics = [faithfulness, answer_relevance]
+    metrics = [faithfulness, answer_relevancy]
     if ground_truth:
         metrics.append(context_precision)
         
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-    embeddings = OpenAIEmbeddings()
-    
+    llm = get_llm()
+
     results = evaluate(
         dataset=dataset,
         metrics=metrics,

@@ -24,7 +24,7 @@ An end-to-end RAG system built to parse HR Employee Handbooks, execute query dec
 |                                                                         |
 |  [PDF Upload] -> PyPDFLoader -> Token Splitter -> FAISS Vector Index    |
 |                                                                         |
-|  [User Query] -> Decomposer Router (GPT-4o-mini)                         |
+|  [User Query] -> Decomposer Router (Gemini 2.5 Flash via OpenRouter)     |
 |                       |                                                 |
 |                       v                                                 |
 |                 FAISS Retriever (MiniLM-L6-v2)                          |
@@ -52,6 +52,7 @@ An end-to-end RAG system built to parse HR Employee Handbooks, execute query dec
 | **Vector Index** | FAISS (`IndexFlatL2`) | Efficient local similarity searching. |
 | **Re-Ranker** | `cross-encoder/ms-marco-MiniLM-L-6-v2` | Scores query-document pairs to fix vector mis-rankings. |
 | **Orchestration** | LangChain (LCEL) | Declarative chain pipeline execution. |
+| **LLM Provider** | OpenRouter (`google/gemini-2.5-flash`) | OpenAI-compatible endpoint routing to Gemini 2.5 Flash. |
 | **Evaluation** | RAGAS | Log metrics (faithfulness, relevancy, precision). |
 
 ---
@@ -86,10 +87,11 @@ Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Add your OpenAI key inside `.env`:
+Add your OpenRouter key inside `.env`:
 ```text
-OPENAI_API_KEY=sk-proj-your-actual-api-key
+OPENROUTER_API_KEY=sk-or-v1-your-actual-api-key
 ```
+The assistant calls `google/gemini-2.5-flash` through OpenRouter's OpenAI-compatible endpoint. Override the model or endpoint via the optional `OPENROUTER_CHAT_MODEL` / `OPENROUTER_BASE_URL` env vars.
 
 ### Step 3: Launch Backend Server
 ```bash
